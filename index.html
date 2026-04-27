@@ -3,237 +3,157 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Монитор Группы - Хоррор Версия</title>
+    <title>Монитор Группы - Horror Edition</title>
     <style>
-        /* CSS-ПЕРЕМЕННЫЕ ДЛЯ ЛЕГКОЙ НАСТРОЙКИ ЦВЕТОВ */
         :root {
-            --bg-color: #050505;        /* Почти черный фон страницы */
-            --card-bg: #101010;        /* Темно-серый фон карточек */
-            --text-main: #f0f0f0;      /* Светло-серый текст */
-            --text-muted: #888;        /* Приглушенный текст */
-            --border-color: #2a0000;  /* Почти невидимая темно-красная граница */
-
-            /* КРОВАВО-КРАСНЫЕ ДЛЯ АКЦЕНТОВ И СВЕЧЕНИЯ */
-            --red-pure: #ff0000;       /* Чистый красный */
-            --red-blood: #b30000;      /* Глубокий красный */
-            --red-glow: rgba(255, 0, 0, 0.6); /* Полупрозрачный красный для свечения */
-            --red-glow-strong: rgba(255, 0, 0, 0.9); /* Сильное свечение */
-
-            /* ОСТАЛЬНЫЕ ЦВЕТА С КРАСНЫМ ОТЛИВОМ */
-            --hover-bg: #1a1a1a;       /* Чуть светлее при наведении */
-            --button-border: #440000; /* Темно-красная граница кнопок */
+            --bg-color: #050505;
+            --card-bg: #101010;
+            --text-main: #f0f0f0;
+            --text-muted: #888;
+            --border-color: #2a0000;
+            --red-pure: #ff0000;
+            --red-blood: #b30000;
+            --red-glow: rgba(255, 0, 0, 0.6);
+            --red-glow-strong: rgba(255, 0, 0, 0.9);
+            --button-border: #440000;
         }
 
-        /* ОБЩИЕ СТИЛИ СТРАНИЦЫ */
         body {
-            margin: 0;
-            padding: 20px;
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            margin: 0; padding: 20px;
+            font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            display: flex; justify-content: center; align-items: center;
             min-height: 100vh;
-            /* Легкий градиент на фоне для глубины */
             background-image: radial-gradient(circle at center, #1a0000 0%, #050505 100%);
         }
 
-        .container {
-            width: 100%;
-            max-width: 650px; /* Ширина как на скриншоте */
-        }
+        .container { width: 100%; max-width: 650px; }
 
-        /* СТИЛИ КАРТОЧЕК */
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 20px;
-            /* Базовое, едва заметное красное свечение */
+            padding: 24px; margin-bottom: 20px;
             box-shadow: 0 4px 15px rgba(255, 0, 0, 0.05);
-            transition: box-shadow 0.3s ease, border-color 0.3s ease;
+            transition: all 0.3s ease;
         }
 
-        /* Эффект при наведении на саму карточку */
         .card:hover {
             border-color: var(--red-blood);
             box-shadow: 0 6px 25px var(--red-glow);
         }
 
-        /* ЗАГОЛОВКИ */
         h2 {
-            margin-top: 0;
-            margin-bottom: 8px;
-            font-weight: 700;
-            font-size: 20px;
-            /* Заголовки горят красным */
-            color: var(--red-pure);
+            margin: 0 0 8px 0; color: var(--red-pure);
             text-shadow: 0 0 10px var(--red-glow-strong);
         }
 
-        p {
-            margin: 0 0 20px 0;
-            font-size: 14px;
-            color: var(--text-muted);
-        }
+        #myInfo { margin-bottom: 20px; font-size: 14px; color: var(--text-muted); }
 
-        span.username {
-            color: var(--text-main);
-            font-weight: 600;
-        }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
-        /* СЕТКА КНОПОК */
-        .button-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-        }
-
-        /* СТИЛИ КНОПОК (Кроваво-красная стилистика) */
         .status-btn {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 10px;
-            background-color: transparent; /* Прозрачные по умолчанию */
-            border: 2px solid var(--button-border);
-            border-radius: 8px;
-            color: var(--text-main);
-            font-size: 14px;
-            font-weight: 600;
-            padding: 12px;
-            cursor: pointer;
-            transition: all 0.3s ease;
-            text-transform: uppercase; /* Все заглавные для строгости */
-            letter-spacing: 0.5px;
+            background: transparent; border: 2px solid var(--button-border);
+            border-radius: 8px; color: var(--text-main);
+            padding: 12px; cursor: pointer; transition: all 0.3s ease;
+            text-transform: uppercase; font-weight: 600;
         }
 
-        /* ЭФФЕКТЫ НАВЕДЕНИЯ НА КНОПКИ (Основной хоррор-эффект) */
         .status-btn:hover {
             background-color: var(--red-blood);
             border-color: var(--red-pure);
-            color: white;
-            /* Сильное, пульсирующее свечение при наведении */
-            box-shadow: 0 0 20px var(--red-glow-strong), 0 0 40px var(--red-glow);
-            transform: translateY(-2px); /* Легкое всплытие */
+            box-shadow: 0 0 20px var(--red-glow-strong);
+            transform: translateY(-2px);
         }
 
-        /* СТИЛИ ДЛЯ СПИСКА МОНИТОРА */
-        .monitor-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
+        /* Стили для списка пользователей */
+        .user-item {
+            display: flex; align-items: center; gap: 15px;
+            padding: 12px; border-radius: 8px; transition: 0.3s;
         }
+        .user-item:hover { background: #1a1a1a; }
 
-        .monitor-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 12px;
-            border-radius: 8px;
-            transition: background-color 0.3s ease;
-        }
-
-        /* Выделение элемента списка при наведении */
-        .monitor-item:hover {
-            background-color: var(--hover-bg);
-        }
-
-        /* ТОЧКА СТАТУСА (Светящаяся, как глаз) */
         .status-dot {
-            width: 10px;
-            height: 10px;
-            border-radius: 50%;
-            margin-top: 5px;
-            /* Базовый цвет - тускло-желтый, как на скрине */
-            background-color: #ffd700;
-            box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
-            transition: all 0.3s ease;
+            width: 12px; height: 12px; border-radius: 50%;
+            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
         }
-
-        /* Если мы наводим на элемент списка, точка загорается красным */
-        .monitor-item:hover .status-dot {
-            background-color: var(--red-pure);
-            box-shadow: 0 0 10px var(--red-glow-strong), 0 0 20px var(--red-glow);
-        }
-
-        .user-info {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .user-name {
-            font-weight: 700;
-            color: var(--text-main);
-            font-size: 15px;
-        }
-
-        .user-status {
-            color: var(--text-muted);
-            font-size: 13px;
-            display: flex;
-            align-items: center;
-            gap: 5px;
-        }
-
-        /* СТИЛИ ИКОНОК */
-        .icon {
-            font-size: 16px;
-        }
+        
+        strong { font-size: 16px; }
+        small { color: var(--text-muted); }
     </style>
 </head>
 <body>
-<script type="module">
-  import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  const URL = 'https://dgleaolfczlbmctieyms.supabase.co';
-  const KEY = 'sb_publishable_200xFfadZQVbnM_BSplPlg_u0shrYGd';
-  const supabase = createClient(URL, KEY);
-
-  const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
-
-  window.changeStatus = async (text, color) => {
-    const { error } = await supabase
-      .from('profiles')
-      .update({ status: text, color: color })
-      .eq('id', MY_ID);
-
-    if (error) {
-      alert("Ошибка! Проверьте RLS политики в Supabase.");
-      console.error(error);
-    } else {
-      fetchGroup();
-    }
-  };
-
-  async function fetchGroup() {
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('*')
-      .order('username', { ascending: true });
-      
-if (error) return console.error(error);
-
-    const list = document.getElementById('groupList');
-    list.innerHTML = data.map(user => `
-        <div class="user-item">
-            <div class="status-dot" style="background: ${user.color || '#ccc'}"></div>
-            <div style="flex-grow: 1;">
-                <strong>${user.username}</strong><br>
-                <small style="color: #666;">${user.status || 'Статус не задан'}</small>
-            </div>
+<div class="container">
+    <div class="card">
+        <h2>Мой профиль</h2>
+        <div id="myInfo">Загрузка...</div>
+        <div class="button-grid">
+            <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
+            <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
+            <button class="status-btn" onclick="changeStatus('👺 В игре', '#00ffff')">👺 В игре</button>
+            <button class="status-btn" onclick="changeStatus('⛓️ Дома', '#888888')">⛓️ Дома</button>
         </div>
-    `).join('');
+    </div>
 
-    const me = data.find(u => u.id === MY_ID);
-    if (me) document.getElementById('myInfo').innerText = `Вы зашли как: ${me.username}`;
-  }
+    <div class="card">
+        <h2>Монитор группы</h2>
+        <div id="groupList">
+            </div>
+    </div>
+</div>
 
-  fetchGroup();
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm'
 
-  setInterval(fetchGroup, 5000);
+    const URL = 'https://dgleaolfczlbmctieyms.supabase.co';
+    const KEY = 'sb_publishable_200xFfadZQVbnM_BSplPlg_u0shrYGd';
+    const supabase = createClient(URL, KEY);
+
+    const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
+
+    // Делаем функцию доступной для HTML кнопок
+    window.changeStatus = async (text, color) => {
+        const { error } = await supabase
+            .from('profiles')
+            .update({ status: text, color: color })
+            .eq('id', MY_ID);
+
+        if (error) {
+            alert("Ошибка! Проверьте RLS политики.");
+            console.error(error);
+        } else {
+            fetchGroup();
+        }
+    };
+
+    async function fetchGroup() {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .order('username', { ascending: true });
+
+        if (error) return console.error(error);
+
+        const list = document.getElementById('groupList');
+        list.innerHTML = data.map(user => `
+            <div class="user-item">
+                <div class="status-dot" style="background: ${user.color || '#ccc'}; box-shadow: 0 0 10px ${user.color || '#ccc'}"></div>
+                <div style="flex-grow: 1;">
+                    <strong>${user.username}</strong><br>
+                    <small>${user.status || 'Нет статуса'}</small>
+                </div>
+            </div>
+        `).join('');
+
+        const me = data.find(u => u.id === MY_ID);
+        if (me) document.getElementById('myInfo').innerText = `Вы зашли как: ${me.username}`;
+    }
+
+    fetchGroup();
+    setInterval(fetchGroup, 5000);
 </script>
+
 </body>
 </html>
