@@ -143,7 +143,7 @@
         .user-details small { color: #aaa; }
         .study-time-tag { font-size: 12px; color: var(--red-pure); opacity: 0.9; font-family: monospace; margin-left: 5px; }
 
-        /* ХОРРОР СТИЛИ ДЛЯ ЧАТА */
+        /* ХОРРОР СТИЛИ ДЛЯ ЧАТА СТАТУСОВ */
         .chat-box {
             background: var(--input-bg);
             border: 1px solid var(--border-color);
@@ -157,9 +157,9 @@
             flex-direction: column;
             gap: 8px;
         }
-        .chat-message { line-height: 1.4; word-break: break-word; }
+        .chat-message { line-height: 1.4; word-break: break-word; border-left: 2px solid #2a0000; padding-left: 6px; }
         .chat-message .author { color: var(--red-pure); font-weight: bold; }
-        .chat-message .text { color: var(--text-main); }
+        .chat-message .text { color: var(--text-main); font-style: italic; }
         
         .chat-input-row { display: flex; gap: 10px; }
         .chat-input {
@@ -232,10 +232,10 @@
     </div>
 
     <div class="card">
-        <h2>💬 Общий чат</h2>
-        <div class="chat-box" id="chatBox">Загрузка сообщений...</div>
+        <h2>💬 Последние крики (Чат)</h2>
+        <div class="chat-box" id="chatBox">Загрузка...</div>
         <div class="chat-input-row">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Сообщение..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Высказать мысль..." onkeydown="if(event.key === 'Enter') sendMessage()">
             <button class="chat-send-btn" onclick="sendMessage()">➤</button>
         </div>
     </div>
@@ -250,7 +250,6 @@
 
     const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
     
-    let myUsername = 'Аноним';
     let isTimerActive = false;
     let totalStudySeconds = 0;
     let timerInterval = null;
@@ -267,7 +266,7 @@
 
     window.changeStatus = async (text, color) => {
         await supabase.from('profiles').update({ status: text, color: color, last_seen: new Date().toISOString() }).eq('id', MY_ID);
-        fetchGroup();
+        fetchGroupAndChat();
     };
 
     window.toggleTimer = function(start) {
@@ -290,7 +289,7 @@
         window.toggleTimer(false);
         const longAgo = new Date(Date.now() - 60000).toISOString();
         await supabase.from('profiles').update({ last_seen: longAgo }).eq('id', MY_ID);
-        fetchGroup();
+        fetchGroupAndChat();
     };
 
     setInterval(async () => {
@@ -299,14 +298,16 @@
         }
     }, 10000);
 
-    // ПОЛУЧЕНИЕ ГРУППЫ И ОБНОВЛЕНИЕ ОНЛАЙНА
-    async function fetchGroup() {
+    // ПОЛУЧЕНИЕ ДАННЫХ И ОБНОВЛЕНИЕ СПИСКА + ЧАТА
+    async function fetchGroupAndChat() {
         const { data, error } = await supabase.from('profiles').select('*').order('username', { ascending: true });
         if (error) return console.error(error);
 
         const list = document.getElementById('groupList');
+        const chatBox = document.getElementById('chatBox');
         const now = new Date();
 
+        // 1. Рендерим монитор группы
         list.innerHTML = data.map(user => {
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
             const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
@@ -328,40 +329,28 @@
             `;
         }).join('');
 
+        // 2. Рендерим "Чат" (только пользователи, у которых есть сообщения)
+        const messagesHtml = data
+            .filter(user => user.last_message) 
+            .map(user => `
+                <div class="chat-message">
+                    <span class="author">${user.username}:</span>
+                    <span class="text">${user.last_message}</span>
+                </div>
+            `).join('');
+
+        chatBox.innerHTML = messagesHtml || '<div style="color: #444; font-style: italic;">Тишина... Никто еще не кричал.</div>';
+
+        // Инициализация при входе
         const me = data.find(u => u.id === MY_ID);
         if (me && totalStudySeconds === 0) {
-            myUsername = me.username;
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
             totalStudySeconds = me.study_seconds || 0;
             document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
         }
     }
 
-    // РАБОТА С ЧАТОМ
-    async function fetchMessages() {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .order('created_at', { ascending: true })
-            .limit(50);
-
-        if (error) return console.error(error);
-
-        const chatBox = document.getElementById('chatBox');
-        const shouldScroll = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
-
-        chatBox.innerHTML = data.map(msg => `
-            <div class="chat-message">
-                <span class="author">${msg.username}:</span>
-                <span class="text">${msg.text}</span>
-            </div>
-        `).join('');
-
-        if (shouldScroll || chatBox.innerHTML.includes('Загрузка сообщений...')) {
-            chatBox.scrollTop = chatBox.scrollHeight;
-        }
-    }
-
+    // ОТПРАВКА СООБЩЕНИЯ (Обновление своей строки)
     window.sendMessage = async () => {
         const input = document.getElementById('chatInput');
         const text = input.value.trim();
@@ -369,19 +358,19 @@
 
         input.value = '';
 
+        // Записываем сообщение прямо в профиль текущего юзера
         const { error } = await supabase
-            .from('messages')
-            .insert([{ username: myUsername, text: text }]);
+            .from('profiles')
+            .update({ last_message: text, last_seen: new Date().toISOString() })
+            .eq('id', MY_ID);
 
         if (error) console.error(error);
-        else fetchMessages();
+        else fetchGroupAndChat();
     };
 
-    // Общие интервалы обновлений
-    fetchGroup();
-    fetchMessages();
-    setInterval(fetchGroup, 4000);
-    setInterval(fetchMessages, 3000); // Чат обновляется каждые 3 секунды
+    // Запуск единого цикла обновлений раз в 4 секунды
+    fetchGroupAndChat();
+    setInterval(fetchGroupAndChat, 4000);
 </script>
 
 </body>
