@@ -271,7 +271,9 @@
     window.signInWithGitHub = async () => {
         await supabase.auth.signInWithOAuth({
             provider: 'github',
-            options: { redirectTo: window.location.origin + window.location.pathname }
+            options: { 
+            redirectTo: 'https://aleks40444.github.io/hto/' 
+        }
         });
     };
 
