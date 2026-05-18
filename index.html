@@ -54,7 +54,6 @@
 
         #myInfo { margin-bottom: 12px; font-size: 14px; color: var(--text-muted); }
         
-        /* Стилизация таймера */
         .timer-display {
             font-size: 28px;
             font-weight: bold;
@@ -89,14 +88,12 @@
             transform: translateY(-2px);
         }
 
-        /* Разделитель блоков */
         .divider {
             height: 1px;
             background: radial-gradient(circle, var(--red-blood) 0%, transparent 100%);
             margin: 20px 0;
         }
 
-        /* Цвета для трех управляющих кнопок */
         .btn-danger {
             background-color: rgba(179, 0, 0, 0.15) !important;
             border-color: var(--red-blood) !important;
@@ -118,7 +115,6 @@
         }
         .btn-secondary:hover { background-color: #444 !important; color: #fff !important; }
 
-        /* Список пользователей */
         .user-item {
             display: flex; align-items: center; gap: 15px;
             padding: 12px; border-radius: 8px; transition: 0.3s;
@@ -129,7 +125,6 @@
         .status-badge { display: flex; align-items: center; position: relative; }
         .status-dot { width: 14px; height: 14px; border-radius: 50%; transition: all 0.5s ease; }
 
-        /* Сетевой статус */
         .online-indicator {
             position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%;
             background-color: #00ff64; box-shadow: 0 0 8px var(--online-glow);
@@ -143,7 +138,6 @@
         .user-details small { color: #aaa; }
         .study-time-tag { font-size: 12px; color: var(--red-pure); opacity: 0.9; font-family: monospace; margin-left: 5px; }
 
-        /* ХОРРОР СТИЛИ ДЛЯ ЧАТА СТАТУСОВ */
         .chat-box {
             background: var(--input-bg);
             border: 1px solid var(--border-color);
@@ -195,7 +189,14 @@
 <div class="container">
     <div class="card">
         <h2>Мой профиль</h2>
-        <div id="myInfo">Загрузка...</div>
+        
+        <div id="authBlock" style="margin-bottom: 15px;">
+            <button class="status-btn" style="border-color: #24292e; color: #fff; background: #24292e;" onclick="signInWithGitHub()">
+                🐙 Войти через GitHub
+            </button>
+        </div>
+
+        <div id="myInfo">Авторизация...</div>
         
         <div class="button-grid">
             <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
@@ -248,7 +249,9 @@
     const KEY = 'sb_publishable_200xFfadZQVbnM_BSplPlg_u0shrYGd';
     const supabase = createClient(URL, KEY);
 
-    const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
+    // Переменная вместо MY_ID, теперь определяется динамически при входе
+    let CURRENT_USER_ID = null;
+    let myUsername = 'Аноним';
     
     let isTimerActive = false;
     let totalStudySeconds = 0;
@@ -264,12 +267,58 @@
         return `${s} сек.`;
     }
 
+    // Логика авторизации GitHub
+    window.signInWithGitHub = async () => {
+        await supabase.auth.signInWithOAuth({
+            provider: 'github',
+            options: { redirectTo: window.location.origin + window.location.pathname }
+        });
+    };
+
+    window.logOut = async () => {
+        await supabase.auth.signOut();
+        window.location.reload();
+    };
+
+    // Функция проверки сессии при загрузке страницы
+    async function checkUserSession() {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session && session.user) {
+            CURRENT_USER_ID = session.user.id;
+            // Достаем имя или логин из метаданных GitHub
+            myUsername = session.user.user_metadata.full_name || session.user.user_metadata.user_name || 'Инкогнито';
+            
+            // Скрываем кнопку входа и показываем кнопку "Выйти"
+            document.getElementById('authBlock').innerHTML = `
+                <button class="status-btn" style="border-color: #333; color: #888; font-size: 11px; padding: 6px;" onclick="logOut()">
+                    🚪 Выйти из аккаунта GitHub
+                </button>
+            `;
+
+            // Проверяем, есть ли запись в таблице profiles, если нет — создаем её
+            const { data: profile } = await supabase.from('profiles').select('*').eq('id', CURRENT_USER_ID).single();
+            if (!profile) {
+                await supabase.from('profiles').insert([
+                    { id: CURRENT_USER_ID, username: myUsername, status: '⛓️ Дома', color: '#888888', study_seconds: 0 }
+                ]);
+            }
+        } else {
+            document.getElementById('myInfo').innerText = "❌ Войдите через GitHub для управления профилем";
+        }
+        
+        // Сразу запускаем получение данных
+        fetchGroupAndChat();
+    }
+
     window.changeStatus = async (text, color) => {
-        await supabase.from('profiles').update({ status: text, color: color, last_seen: new Date().toISOString() }).eq('id', MY_ID);
+        if (!CURRENT_USER_ID) return alert("Сначала нужно авторизоваться!");
+        await supabase.from('profiles').update({ status: text, color: color, last_seen: new Date().toISOString() }).eq('id', CURRENT_USER_ID);
         fetchGroupAndChat();
     };
 
     window.toggleTimer = function(start) {
+        if (!CURRENT_USER_ID) return alert("Сначала нужно авторизоваться!");
         isTimerActive = start;
         clearInterval(timerInterval);
         if (isTimerActive) {
@@ -277,28 +326,28 @@
                 totalStudySeconds++;
                 document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
                 if (totalStudySeconds % 5 === 0) {
-                    await supabase.from('profiles').update({ study_seconds: totalStudySeconds, last_seen: new Date().toISOString() }).eq('id', MY_ID);
+                    await supabase.from('profiles').update({ study_seconds: totalStudySeconds, last_seen: new Date().toISOString() }).eq('id', CURRENT_USER_ID);
                 }
             }, 1000);
         } else {
-            supabase.from('profiles').update({ study_seconds: totalStudySeconds }).eq('id', MY_ID);
+            supabase.from('profiles').update({ study_seconds: totalStudySeconds }).eq('id', CURRENT_USER_ID);
         }
     };
 
     window.goOffline = async () => {
+        if (!CURRENT_USER_ID) return;
         window.toggleTimer(false);
         const longAgo = new Date(Date.now() - 60000).toISOString();
-        await supabase.from('profiles').update({ last_seen: longAgo }).eq('id', MY_ID);
+        await supabase.from('profiles').update({ last_seen: longAgo }).eq('id', CURRENT_USER_ID);
         fetchGroupAndChat();
     };
 
     setInterval(async () => {
-        if (!isTimerActive) {
-            await supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', MY_ID);
+        if (CURRENT_USER_ID && !isTimerActive) {
+            await supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', CURRENT_USER_ID);
         }
     }, 10000);
 
-    // ПОЛУЧЕНИЕ ДАННЫХ И ОБНОВЛЕНИЕ СПИСКА + ЧАТА
     async function fetchGroupAndChat() {
         const { data, error } = await supabase.from('profiles').select('*').order('username', { ascending: true });
         if (error) return console.error(error);
@@ -307,7 +356,6 @@
         const chatBox = document.getElementById('chatBox');
         const now = new Date();
 
-        // 1. Рендерим монитор группы
         list.innerHTML = data.map(user => {
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
             const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
@@ -329,7 +377,6 @@
             `;
         }).join('');
 
-        // 2. Рендерим "Чат" (только пользователи, у которых есть сообщения)
         const messagesHtml = data
             .filter(user => user.last_message) 
             .map(user => `
@@ -341,35 +388,38 @@
 
         chatBox.innerHTML = messagesHtml || '<div style="color: #444; font-style: italic;">Тишина... Никто еще не кричал.</div>';
 
-        // Инициализация при входе
-        const me = data.find(u => u.id === MY_ID);
-        if (me && totalStudySeconds === 0) {
-            document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
-            totalStudySeconds = me.study_seconds || 0;
-            document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+        // Инициализация данных текущего залогиненного пользователя
+        if (CURRENT_USER_ID) {
+            const me = data.find(u => u.id === CURRENT_USER_ID);
+            if (me) {
+                document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
+                if (totalStudySeconds === 0) {
+                    totalStudySeconds = me.study_seconds || 0;
+                    document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+                }
+            }
         }
     }
 
-    // ОТПРАВКА СООБЩЕНИЯ (Обновление своей строки)
     window.sendMessage = async () => {
+        if (!CURRENT_USER_ID) return alert("Сначала нужно авторизоваться!");
         const input = document.getElementById('chatInput');
         const text = input.value.trim();
         if (!text) return;
 
         input.value = '';
 
-        // Записываем сообщение прямо в профиль текущего юзера
         const { error } = await supabase
             .from('profiles')
             .update({ last_message: text, last_seen: new Date().toISOString() })
-            .eq('id', MY_ID);
+            .eq('id', CURRENT_USER_ID);
 
         if (error) console.error(error);
         else fetchGroupAndChat();
     };
 
-    // Запуск единого цикла обновлений раз в 4 секунды
-    fetchGroupAndChat();
+    // Вместо прямого вызова fetchGroupAndChat сначала проверяем сессию
+    checkUserSession();
     setInterval(fetchGroupAndChat, 4000);
 </script>
 
