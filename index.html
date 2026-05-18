@@ -62,7 +62,12 @@
             margin-bottom: 20px;
             display: flex;
             align-items: center;
+            justify-content: center;
             gap: 10px;
+            background: #0a0000;
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px dashed var(--red-blood);
         }
 
         .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -70,14 +75,46 @@
         .status-btn {
             background: transparent; border: 2px solid var(--button-border);
             border-radius: 8px; color: var(--text-main);
-            padding: 12px; cursor: pointer; transition: all 0.3s ease;
+            padding: 14px; cursor: pointer; transition: all 0.3s ease;
             text-transform: uppercase; font-weight: 600;
+            width: 100%;
+            box-sizing: border-box;
         }
 
-        .status-btn:hover {
-            background-color: var(--red-blood);
-            border-color: var(--red-pure);
-            box-shadow: 0 0 20px var(--red-glow-strong);
+        /* Цвета кнопок под стиль оригинального скриншота */
+        .btn-danger {
+            background-color: rgba(179, 0, 0, 0.15) !important;
+            border-color: var(--red-blood) !important;
+            color: #ff3333 !important;
+        }
+        .btn-danger:hover {
+            background-color: var(--red-blood) !important;
+            color: #fff !important;
+            box-shadow: 0 0 20px var(--red-glow-strong) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-warning {
+            background-color: rgba(218, 165, 32, 0.1) !important;
+            border-color: #aa8000 !important;
+            color: #ffd700 !important;
+        }
+        .btn-warning:hover {
+            background-color: #aa8000 !important;
+            color: #fff !important;
+            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background-color: rgba(68, 68, 68, 0.2) !important;
+            border-color: #444 !important;
+            color: #aaa !important;
+        }
+        .btn-secondary:hover {
+            background-color: #444 !important;
+            color: #fff !important;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2) !important;
             transform: translateY(-2px);
         }
 
@@ -100,7 +137,7 @@
             transition: all 0.5s ease;
         }
 
-        /* Пульсирующая метка сетевого статуса */
+        /* Метка сетевого статуса (Online / Offline) */
         .online-indicator {
             position: absolute;
             top: -4px; right: -4px;
@@ -120,10 +157,11 @@
         .user-details strong { font-size: 16px; color: #fff; }
         .user-details small { color: #aaa; }
         .study-time-tag { 
-            font-size: 11px; 
+            font-size: 12px; 
             color: var(--red-pure); 
-            opacity: 0.8;
+            opacity: 0.9;
             font-family: monospace;
+            margin-left: 5px;
         }
     </style>
 </head>
@@ -138,11 +176,19 @@
             <span>⏱️</span> <span id="localTimer">00 сек.</span>
         </div>
 
-        <div class="button-grid">
-            <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
-            <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
-            <button class="status-btn" onclick="changeStatus('👺 В игре', '#00ffff')">👺 В игре</button>
-            <button class="status-btn" onclick="changeStatus('⛓️ Дома', '#888888')">⛓️ Дома</button>
+        <div style="display: flex; flex-direction: column; gap: 12px;">
+            <button class="status-btn btn-danger" onclick="changeStatus('🩸 Учусь', '#ff0000')">
+                🛑 Завершить сессию
+            </button>
+            
+            <div class="button-grid">
+                <button class="status-btn btn-warning" onclick="changeStatus('☠️ Перерыв', '#ffd700')">
+                    ☕ Перерыв
+                </button>
+                <button class="status-btn btn-secondary" onclick="changeStatus('⛓️ Вышел', '#888888')">
+                    Выход
+                </button>
+            </div>
         </div>
     </div>
 
@@ -165,7 +211,7 @@
     let totalStudySeconds = 0;
     let timerInterval = null;
 
-    // Форматирование секунд в читаемый вид (например: "1ч 23м 45с" или "23 сек.")
+    // Форматирование времени
     function formatTime(seconds) {
         if (!seconds || seconds <= 0) return '0 сек.';
         const h = Math.floor(seconds / 3600);
@@ -177,7 +223,7 @@
         return `${s} сек.`;
     }
 
-    // Изменение статуса
+    // Смена статуса в БД
     window.changeStatus = async (text, color) => {
         currentStatus = text;
         
@@ -191,7 +237,7 @@
             .eq('id', MY_ID);
 
         if (error) {
-            alert("Ошибка! Проверьте RLS политики.");
+            alert("Ошибка RLS или базы данных!");
             console.error(error);
         } else {
             manageTimer();
@@ -199,7 +245,7 @@
         }
     };
 
-    // Логика работы локального таймера «в муках»
+    // Управление локальным таймером
     function manageTimer() {
         clearInterval(timerInterval);
         
@@ -208,7 +254,7 @@
                 totalStudySeconds++;
                 document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
                 
-                // Каждые 5 секунд синхронизируем время учебы и пингуем онлайн статус в бэкенд
+                // Каждые 5 секунд отправляем накопленное время и пинг в базу
                 if (totalStudySeconds % 5 === 0) {
                     await supabase
                         .from('profiles')
@@ -224,7 +270,7 @@
         }
     }
 
-    // Каждые 10 секунд шлем сигнал "Я онлайн", если вкладка открыта
+    // Фоновый пинг онлайна раз в 10 секунд
     setInterval(async () => {
         await supabase
             .from('profiles')
@@ -232,6 +278,7 @@
             .eq('id', MY_ID);
     }, 10000);
 
+    // Получение списка группы
     async function fetchGroup() {
         const { data, error } = await supabase
             .from('profiles')
@@ -244,10 +291,10 @@
         const now = new Date();
 
         list.innerHTML = data.map(user => {
-            // Считаем разницу во времени для определения онлайн-статуса
+            // Если последнее действие было меньше 15 секунд назад — онлайн
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
             const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
-            const isOnline = diffSeconds < 15; // Онлайн, если пинг был меньше 15 сек назад
+            const isOnline = diffSeconds < 15;
 
             return `
                 <div class="user-item">
@@ -257,7 +304,7 @@
                     </div>
                     <div class="user-details" style="flex-grow: 1;">
                         <strong>${user.username}</strong> 
-                        <span class="study-time-tag">(${formatTime(user.study_seconds)})</span>
+                        <span class="study-time-tag">⏱️ ${formatTime(user.study_seconds)}</span>
                         <br>
                         <small>${user.status || 'В небытии'}</small>
                     </div>
@@ -265,7 +312,7 @@
             `;
         }).join('');
 
-        // Обновляем данные текущего пользователя при первой загрузке
+        // Инициализация при первой загрузке страницы
         const me = data.find(u => u.id === MY_ID);
         if (me && !currentStatus) {
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
@@ -276,7 +323,7 @@
         }
     }
 
-    // Первичный запуск и интервал обновления списка группы
+    // Запуск цикла обновлений списка (раз в 4 секунды)
     fetchGroup();
     setInterval(fetchGroup, 4000);
 </script>
