@@ -17,6 +17,8 @@
             --red-glow-strong: rgba(255, 0, 0, 0.9);
             --button-border: #440000;
             --online-glow: rgba(0, 255, 100, 0.8);
+            --input-bg: #151515;
+            --green-btn: #10b981;
         }
 
         body {
@@ -94,39 +96,27 @@
             margin: 20px 0;
         }
 
-        /* Цвета для трех новых управляющих кнопок */
+        /* Цвета для трех управляющих кнопок */
         .btn-danger {
             background-color: rgba(179, 0, 0, 0.15) !important;
             border-color: var(--red-blood) !important;
             color: #ff3333 !important;
         }
-        .btn-danger:hover {
-            background-color: var(--red-blood) !important;
-            color: #fff !important;
-            box-shadow: 0 0 20px var(--red-glow-strong) !important;
-        }
+        .btn-danger:hover { background-color: var(--red-blood) !important; color: #fff !important; }
 
         .btn-warning {
             background-color: rgba(218, 165, 32, 0.1) !important;
             border-color: #aa8000 !important;
             color: #ffd700 !important;
         }
-        .btn-warning:hover {
-            background-color: #aa8000 !important;
-            color: #fff !important;
-            box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
-        }
+        .btn-warning:hover { background-color: #aa8000 !important; color: #fff !important; }
 
         .btn-secondary {
             background-color: rgba(68, 68, 68, 0.2) !important;
             border-color: #444 !important;
             color: #aaa !important;
         }
-        .btn-secondary:hover {
-            background-color: #444 !important;
-            color: #fff !important;
-            box-shadow: 0 0 20px rgba(255, 255, 255, 0.2) !important;
-        }
+        .btn-secondary:hover { background-color: #444 !important; color: #fff !important; }
 
         /* Список пользователей */
         .user-item {
@@ -136,43 +126,68 @@
         }
         .user-item:hover { background: #150505; }
 
-        .status-badge {
-            display: flex;
-            align-items: center;
-            position: relative;
-        }
-
-        .status-dot {
-            width: 14px; height: 14px; border-radius: 50%;
-            transition: all 0.5s ease;
-        }
+        .status-badge { display: flex; align-items: center; position: relative; }
+        .status-dot { width: 14px; height: 14px; border-radius: 50%; transition: all 0.5s ease; }
 
         /* Сетевой статус */
         .online-indicator {
-            position: absolute;
-            top: -4px; right: -4px;
-            width: 8px; height: 8px;
-            border-radius: 50%;
-            background-color: #00ff64;
-            box-shadow: 0 0 8px var(--online-glow);
+            position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%;
+            background-color: #00ff64; box-shadow: 0 0 8px var(--online-glow);
         }
         .offline-indicator {
-            position: absolute;
-            top: -4px; right: -4px;
-            width: 8px; height: 8px;
-            border-radius: 50%;
+            position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%;
             background-color: #444;
         }
         
         .user-details strong { font-size: 16px; color: #fff; }
         .user-details small { color: #aaa; }
-        .study-time-tag { 
-            font-size: 12px; 
-            color: var(--red-pure); 
-            opacity: 0.9;
-            font-family: monospace;
-            margin-left: 5px;
+        .study-time-tag { font-size: 12px; color: var(--red-pure); opacity: 0.9; font-family: monospace; margin-left: 5px; }
+
+        /* ХОРРОР СТИЛИ ДЛЯ ЧАТА */
+        .chat-box {
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            height: 200px;
+            overflow-y: auto;
+            padding: 12px;
+            margin-bottom: 12px;
+            font-size: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
         }
+        .chat-message { line-height: 1.4; word-break: break-word; }
+        .chat-message .author { color: var(--red-pure); font-weight: bold; }
+        .chat-message .text { color: var(--text-main); }
+        
+        .chat-input-row { display: flex; gap: 10px; }
+        .chat-input {
+            flex-grow: 1;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            color: var(--text-main);
+            padding: 12px;
+            outline: none;
+            transition: 0.3s;
+        }
+        .chat-input:focus { border-color: var(--red-blood); box-shadow: 0 0 10px rgba(179,0,0,0.3); }
+        
+        .chat-send-btn {
+            background: var(--green-btn);
+            border: none;
+            border-radius: 8px;
+            color: white;
+            padding: 0 16px;
+            cursor: pointer;
+            font-size: 18px;
+            transition: 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .chat-send-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
     </style>
 </head>
 <body>
@@ -215,6 +230,15 @@
         <h2>Монитор группы</h2>
         <div id="groupList"></div>
     </div>
+
+    <div class="card">
+        <h2>💬 Общий чат</h2>
+        <div class="chat-box" id="chatBox">Загрузка сообщений...</div>
+        <div class="chat-input-row">
+            <input type="text" class="chat-input" id="chatInput" placeholder="Сообщение..." onkeydown="if(event.key === 'Enter') sendMessage()">
+            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+        </div>
+    </div>
 </div>
 
 <script type="module">
@@ -226,99 +250,58 @@
 
     const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
     
+    let myUsername = 'Аноним';
     let isTimerActive = false;
     let totalStudySeconds = 0;
     let timerInterval = null;
 
-    // Форматирование времени
     function formatTime(seconds) {
         if (!seconds || seconds <= 0) return '0 сек.';
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
-        
         if (h > 0) return `${h}ч ${m}м ${s}с`;
         if (m > 0) return `${m}м ${s}с`;
         return `${s} сек.`;
     }
 
-    // Смена статуса (Оригинальные 4 кнопки)
     window.changeStatus = async (text, color) => {
-        const { error } = await supabase
-            .from('profiles')
-            .update({ 
-                status: text, 
-                color: color,
-                last_seen: new Date().toISOString()
-            })
-            .eq('id', MY_ID);
-
-        if (error) {
-            alert("Ошибка изменения статуса!");
-            console.error(error);
-        } else {
-            fetchGroup();
-        }
+        await supabase.from('profiles').update({ status: text, color: color, last_seen: new Date().toISOString() }).eq('id', MY_ID);
+        fetchGroup();
     };
 
-    // Управление таймером (Новые кнопки: Завершить сессию / Перерыв)
     window.toggleTimer = function(start) {
         isTimerActive = start;
         clearInterval(timerInterval);
-
         if (isTimerActive) {
             timerInterval = setInterval(async () => {
                 totalStudySeconds++;
                 document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
-                
-                // Каждые 5 секунд отправляем накопленное время в базу
                 if (totalStudySeconds % 5 === 0) {
-                    await supabase
-                        .from('profiles')
-                        .update({ 
-                            study_seconds: totalStudySeconds,
-                            last_seen: new Date().toISOString() 
-                        })
-                        .eq('id', MY_ID);
+                    await supabase.from('profiles').update({ study_seconds: totalStudySeconds, last_seen: new Date().toISOString() }).eq('id', MY_ID);
                 }
             }, 1000);
         } else {
-            // Если нажали паузу, сохраняем текущий результат принудительно
             supabase.from('profiles').update({ study_seconds: totalStudySeconds }).eq('id', MY_ID);
         }
     };
 
-    // Кнопка Выход
     window.goOffline = async () => {
-        window.toggleTimer(false); // Стопаем таймер
-        
-        // Смещаем последнее посещение в прошлое, чтобы мгновенно сбросить онлайн-индикатор
+        window.toggleTimer(false);
         const longAgo = new Date(Date.now() - 60000).toISOString();
-        await supabase
-            .from('profiles')
-            .update({ last_seen: longAgo })
-            .eq('id', MY_ID);
-            
+        await supabase.from('profiles').update({ last_seen: longAgo }).eq('id', MY_ID);
         fetchGroup();
     };
 
-    // Фоновый автоматический пинг онлайна раз в 10 секунд (пока открыта вкладка)
     setInterval(async () => {
-        if (!isTimerActive) { // Если таймер активен, он шлет пинги сам
-            await supabase
-                .from('profiles')
-                .update({ last_seen: new Date().toISOString() })
-                .eq('id', MY_ID);
+        if (!isTimerActive) {
+            await supabase.from('profiles').update({ last_seen: new Date().toISOString() }).eq('id', MY_ID);
         }
     }, 10000);
 
-    // Сбор данных о группе
+    // ПОЛУЧЕНИЕ ГРУППЫ И ОБНОВЛЕНИЕ ОНЛАЙНА
     async function fetchGroup() {
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .order('username', { ascending: true });
-
+        const { data, error } = await supabase.from('profiles').select('*').order('username', { ascending: true });
         if (error) return console.error(error);
 
         const list = document.getElementById('groupList');
@@ -327,7 +310,7 @@
         list.innerHTML = data.map(user => {
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
             const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
-            const isOnline = diffSeconds < 15; // Онлайн, если пинг был в пределах 15 сек.
+            const isOnline = diffSeconds < 15;
 
             return `
                 <div class="user-item">
@@ -345,17 +328,60 @@
             `;
         }).join('');
 
-        // Первичная подгрузка данных юзера при обновлении страницы
         const me = data.find(u => u.id === MY_ID);
         if (me && totalStudySeconds === 0) {
+            myUsername = me.username;
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
             totalStudySeconds = me.study_seconds || 0;
             document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
         }
     }
 
+    // РАБОТА С ЧАТОМ
+    async function fetchMessages() {
+        const { data, error } = await supabase
+            .from('messages')
+            .select('*')
+            .order('created_at', { ascending: true })
+            .limit(50);
+
+        if (error) return console.error(error);
+
+        const chatBox = document.getElementById('chatBox');
+        const shouldScroll = chatBox.scrollTop + chatBox.clientHeight >= chatBox.scrollHeight - 20;
+
+        chatBox.innerHTML = data.map(msg => `
+            <div class="chat-message">
+                <span class="author">${msg.username}:</span>
+                <span class="text">${msg.text}</span>
+            </div>
+        `).join('');
+
+        if (shouldScroll || chatBox.innerHTML.includes('Загрузка сообщений...')) {
+            chatBox.scrollTop = chatBox.scrollHeight;
+        }
+    }
+
+    window.sendMessage = async () => {
+        const input = document.getElementById('chatInput');
+        const text = input.value.trim();
+        if (!text) return;
+
+        input.value = '';
+
+        const { error } = await supabase
+            .from('messages')
+            .insert([{ username: myUsername, text: text }]);
+
+        if (error) console.error(error);
+        else fetchMessages();
+    };
+
+    // Общие интервалы обновлений
     fetchGroup();
+    fetchMessages();
     setInterval(fetchGroup, 4000);
+    setInterval(fetchMessages, 3000); // Чат обновляется каждые 3 секунды
 </script>
 
 </body>
