@@ -9,13 +9,14 @@
             --bg-color: #050505;
             --card-bg: #101010;
             --text-main: #f0f0f0;
-            --text-muted: #888;
+            --text-muted: #666;
             --border-color: #2a0000;
             --red-pure: #ff0000;
             --red-blood: #b30000;
             --red-glow: rgba(255, 0, 0, 0.6);
             --red-glow-strong: rgba(255, 0, 0, 0.9);
             --button-border: #440000;
+            --online-glow: rgba(0, 255, 100, 0.8);
         }
 
         body {
@@ -49,7 +50,20 @@
             text-shadow: 0 0 10px var(--red-glow-strong);
         }
 
-        #myInfo { margin-bottom: 20px; font-size: 14px; color: var(--text-muted); }
+        #myInfo { margin-bottom: 12px; font-size: 14px; color: var(--text-muted); }
+        
+        /* Стилизация таймера */
+        .timer-display {
+            font-size: 28px;
+            font-weight: bold;
+            color: var(--red-pure);
+            text-shadow: 0 0 12px var(--red-glow-strong);
+            font-family: 'Courier New', Courier, monospace;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
 
         .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
@@ -67,20 +81,50 @@
             transform: translateY(-2px);
         }
 
-        /* Стили для списка пользователей */
+        /* Список пользователей */
         .user-item {
             display: flex; align-items: center; gap: 15px;
             padding: 12px; border-radius: 8px; transition: 0.3s;
+            border-bottom: 1px solid #150000;
         }
-        .user-item:hover { background: #1a1a1a; }
+        .user-item:hover { background: #150505; }
+
+        .status-badge {
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
 
         .status-dot {
-            width: 12px; height: 12px; border-radius: 50%;
-            box-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+            width: 14px; height: 14px; border-radius: 50%;
+            transition: all 0.5s ease;
+        }
+
+        /* Пульсирующая метка сетевого статуса */
+        .online-indicator {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background-color: #00ff64;
+            box-shadow: 0 0 8px var(--online-glow);
+        }
+        .offline-indicator {
+            position: absolute;
+            top: -4px; right: -4px;
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background-color: #444;
         }
         
-        strong { font-size: 16px; }
-        small { color: var(--text-muted); }
+        .user-details strong { font-size: 16px; color: #fff; }
+        .user-details small { color: #aaa; }
+        .study-time-tag { 
+            font-size: 11px; 
+            color: var(--red-pure); 
+            opacity: 0.8;
+            font-family: monospace;
+        }
     </style>
 </head>
 <body>
@@ -89,6 +133,11 @@
     <div class="card">
         <h2>Мой профиль</h2>
         <div id="myInfo">Загрузка...</div>
+        
+        <div class="timer-display">
+            <span>⏱️</span> <span id="localTimer">00 сек.</span>
+        </div>
+
         <div class="button-grid">
             <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
             <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
@@ -99,8 +148,7 @@
 
     <div class="card">
         <h2>Монитор группы</h2>
-        <div id="groupList">
-            </div>
+        <div id="groupList"></div>
     </div>
 </div>
 
@@ -112,21 +160,77 @@
     const supabase = createClient(URL, KEY);
 
     const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
+    
+    let currentStatus = '';
+    let totalStudySeconds = 0;
+    let timerInterval = null;
 
-    // Делаем функцию доступной для HTML кнопок
+    // Форматирование секунд в читаемый вид (например: "1ч 23м 45с" или "23 сек.")
+    function formatTime(seconds) {
+        if (!seconds || seconds <= 0) return '0 сек.';
+        const h = Math.floor(seconds / 3600);
+        const m = Math.floor((seconds % 3600) / 60);
+        const s = seconds % 60;
+        
+        if (h > 0) return `${h}ч ${m}м ${s}с`;
+        if (m > 0) return `${m}м ${s}с`;
+        return `${s} сек.`;
+    }
+
+    // Изменение статуса
     window.changeStatus = async (text, color) => {
+        currentStatus = text;
+        
         const { error } = await supabase
             .from('profiles')
-            .update({ status: text, color: color })
+            .update({ 
+                status: text, 
+                color: color,
+                last_seen: new Date().toISOString()
+            })
             .eq('id', MY_ID);
 
         if (error) {
             alert("Ошибка! Проверьте RLS политики.");
             console.error(error);
         } else {
+            manageTimer();
             fetchGroup();
         }
     };
+
+    // Логика работы локального таймера «в муках»
+    function manageTimer() {
+        clearInterval(timerInterval);
+        
+        if (currentStatus === '🩸 Учусь') {
+            timerInterval = setInterval(async () => {
+                totalStudySeconds++;
+                document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+                
+                // Каждые 5 секунд синхронизируем время учебы и пингуем онлайн статус в бэкенд
+                if (totalStudySeconds % 5 === 0) {
+                    await supabase
+                        .from('profiles')
+                        .update({ 
+                            study_seconds: totalStudySeconds,
+                            last_seen: new Date().toISOString() 
+                        })
+                        .eq('id', MY_ID);
+                }
+            }, 1000);
+        } else {
+            document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+        }
+    }
+
+    // Каждые 10 секунд шлем сигнал "Я онлайн", если вкладка открыта
+    setInterval(async () => {
+        await supabase
+            .from('profiles')
+            .update({ last_seen: new Date().toISOString() })
+            .eq('id', MY_ID);
+    }, 10000);
 
     async function fetchGroup() {
         const { data, error } = await supabase
@@ -137,22 +241,44 @@
         if (error) return console.error(error);
 
         const list = document.getElementById('groupList');
-        list.innerHTML = data.map(user => `
-            <div class="user-item">
-                <div class="status-dot" style="background: ${user.color || '#ccc'}; box-shadow: 0 0 10px ${user.color || '#ccc'}"></div>
-                <div style="flex-grow: 1;">
-                    <strong>${user.username}</strong><br>
-                    <small>${user.status || 'Нет статуса'}</small>
-                </div>
-            </div>
-        `).join('');
+        const now = new Date();
 
+        list.innerHTML = data.map(user => {
+            // Считаем разницу во времени для определения онлайн-статуса
+            const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
+            const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
+            const isOnline = diffSeconds < 15; // Онлайн, если пинг был меньше 15 сек назад
+
+            return `
+                <div class="user-item">
+                    <div class="status-badge">
+                        <div class="status-dot" style="background: ${user.color || '#ccc'}; box-shadow: 0 0 10px ${user.color || '#ccc'}"></div>
+                        <div class="${isOnline ? 'online-indicator' : 'offline-indicator'}"></div>
+                    </div>
+                    <div class="user-details" style="flex-grow: 1;">
+                        <strong>${user.username}</strong> 
+                        <span class="study-time-tag">(${formatTime(user.study_seconds)})</span>
+                        <br>
+                        <small>${user.status || 'В небытии'}</small>
+                    </div>
+                </div>
+            `;
+        }).join('');
+
+        // Обновляем данные текущего пользователя при первой загрузке
         const me = data.find(u => u.id === MY_ID);
-        if (me) document.getElementById('myInfo').innerText = `Вы зашли как: ${me.username}`;
+        if (me && !currentStatus) {
+            document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
+            currentStatus = me.status || '';
+            totalStudySeconds = me.study_seconds || 0;
+            document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+            manageTimer();
+        }
     }
 
+    // Первичный запуск и интервал обновления списка группы
     fetchGroup();
-    setInterval(fetchGroup, 5000);
+    setInterval(fetchGroup, 4000);
 </script>
 
 </body>
