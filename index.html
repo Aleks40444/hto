@@ -70,18 +70,31 @@
             border: 1px dashed var(--red-blood);
         }
 
-        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .button-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
 
         .status-btn {
             background: transparent; border: 2px solid var(--button-border);
             border-radius: 8px; color: var(--text-main);
-            padding: 14px; cursor: pointer; transition: all 0.3s ease;
+            padding: 12px; cursor: pointer; transition: all 0.3s ease;
             text-transform: uppercase; font-weight: 600;
-            width: 100%;
             box-sizing: border-box;
+            width: 100%;
+        }
+        .status-btn:hover {
+            background-color: var(--red-blood);
+            border-color: var(--red-pure);
+            box-shadow: 0 0 20px var(--red-glow-strong);
+            transform: translateY(-2px);
         }
 
-        /* Цвета кнопок под стиль оригинального скриншота */
+        /* Разделитель блоков */
+        .divider {
+            height: 1px;
+            background: radial-gradient(circle, var(--red-blood) 0%, transparent 100%);
+            margin: 20px 0;
+        }
+
+        /* Цвета для трех новых управляющих кнопок */
         .btn-danger {
             background-color: rgba(179, 0, 0, 0.15) !important;
             border-color: var(--red-blood) !important;
@@ -91,7 +104,6 @@
             background-color: var(--red-blood) !important;
             color: #fff !important;
             box-shadow: 0 0 20px var(--red-glow-strong) !important;
-            transform: translateY(-2px);
         }
 
         .btn-warning {
@@ -103,7 +115,6 @@
             background-color: #aa8000 !important;
             color: #fff !important;
             box-shadow: 0 0 20px rgba(255, 215, 0, 0.6) !important;
-            transform: translateY(-2px);
         }
 
         .btn-secondary {
@@ -115,7 +126,6 @@
             background-color: #444 !important;
             color: #fff !important;
             box-shadow: 0 0 20px rgba(255, 255, 255, 0.2) !important;
-            transform: translateY(-2px);
         }
 
         /* Список пользователей */
@@ -137,7 +147,7 @@
             transition: all 0.5s ease;
         }
 
-        /* Метка сетевого статуса (Online / Offline) */
+        /* Сетевой статус */
         .online-indicator {
             position: absolute;
             top: -4px; right: -4px;
@@ -172,20 +182,29 @@
         <h2>Мой профиль</h2>
         <div id="myInfo">Загрузка...</div>
         
+        <div class="button-grid">
+            <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
+            <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
+            <button class="status-btn" onclick="changeStatus('👺 В игре', '#00ffff')">👺 В игре</button>
+            <button class="status-btn" onclick="changeStatus('⛓️ Дома', '#888888')">⛓️ Дома</button>
+        </div>
+
+        <div class="divider"></div>
+
         <div class="timer-display">
             <span>⏱️</span> <span id="localTimer">00 сек.</span>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="status-btn btn-danger" onclick="changeStatus('🩸 Учусь', '#ff0000')">
-                🛑 Завершить сессию
+            <button class="status-btn btn-danger" onclick="toggleTimer(true)">
+                🛑 Завершить сессию (Старт Таймера)
             </button>
             
-            <div class="button-grid">
-                <button class="status-btn btn-warning" onclick="changeStatus('☠️ Перерыв', '#ffd700')">
-                    ☕ Перерыв
+            <div class="button-grid" style="margin-bottom: 0;">
+                <button class="status-btn btn-warning" onclick="toggleTimer(false)">
+                    ☕ Перерыв (Пауза)
                 </button>
-                <button class="status-btn btn-secondary" onclick="changeStatus('⛓️ Вышел', '#888888')">
+                <button class="status-btn btn-secondary" onclick="goOffline()">
                     Выход
                 </button>
             </div>
@@ -207,7 +226,7 @@
 
     const MY_ID = '6d0d2192-3d4a-475b-bf97-2a2ef029d948';
     
-    let currentStatus = '';
+    let isTimerActive = false;
     let totalStudySeconds = 0;
     let timerInterval = null;
 
@@ -223,10 +242,8 @@
         return `${s} сек.`;
     }
 
-    // Смена статуса в БД
+    // Смена статуса (Оригинальные 4 кнопки)
     window.changeStatus = async (text, color) => {
-        currentStatus = text;
-        
         const { error } = await supabase
             .from('profiles')
             .update({ 
@@ -237,24 +254,24 @@
             .eq('id', MY_ID);
 
         if (error) {
-            alert("Ошибка RLS или базы данных!");
+            alert("Ошибка изменения статуса!");
             console.error(error);
         } else {
-            manageTimer();
             fetchGroup();
         }
     };
 
-    // Управление локальным таймером
-    function manageTimer() {
+    // Управление таймером (Новые кнопки: Завершить сессию / Перерыв)
+    window.toggleTimer = function(start) {
+        isTimerActive = start;
         clearInterval(timerInterval);
-        
-        if (currentStatus === '🩸 Учусь') {
+
+        if (isTimerActive) {
             timerInterval = setInterval(async () => {
                 totalStudySeconds++;
                 document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
                 
-                // Каждые 5 секунд отправляем накопленное время и пинг в базу
+                // Каждые 5 секунд отправляем накопленное время в базу
                 if (totalStudySeconds % 5 === 0) {
                     await supabase
                         .from('profiles')
@@ -266,19 +283,36 @@
                 }
             }, 1000);
         } else {
-            document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+            // Если нажали паузу, сохраняем текущий результат принудительно
+            supabase.from('profiles').update({ study_seconds: totalStudySeconds }).eq('id', MY_ID);
         }
-    }
+    };
 
-    // Фоновый пинг онлайна раз в 10 секунд
-    setInterval(async () => {
+    // Кнопка Выход
+    window.goOffline = async () => {
+        window.toggleTimer(false); // Стопаем таймер
+        
+        // Смещаем последнее посещение в прошлое, чтобы мгновенно сбросить онлайн-индикатор
+        const longAgo = new Date(Date.now() - 60000).toISOString();
         await supabase
             .from('profiles')
-            .update({ last_seen: new Date().toISOString() })
+            .update({ last_seen: longAgo })
             .eq('id', MY_ID);
+            
+        fetchGroup();
+    };
+
+    // Фоновый автоматический пинг онлайна раз в 10 секунд (пока открыта вкладка)
+    setInterval(async () => {
+        if (!isTimerActive) { // Если таймер активен, он шлет пинги сам
+            await supabase
+                .from('profiles')
+                .update({ last_seen: new Date().toISOString() })
+                .eq('id', MY_ID);
+        }
     }, 10000);
 
-    // Получение списка группы
+    // Сбор данных о группе
     async function fetchGroup() {
         const { data, error } = await supabase
             .from('profiles')
@@ -291,10 +325,9 @@
         const now = new Date();
 
         list.innerHTML = data.map(user => {
-            // Если последнее действие было меньше 15 секунд назад — онлайн
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
             const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
-            const isOnline = diffSeconds < 15;
+            const isOnline = diffSeconds < 15; // Онлайн, если пинг был в пределах 15 сек.
 
             return `
                 <div class="user-item">
@@ -312,18 +345,15 @@
             `;
         }).join('');
 
-        // Инициализация при первой загрузке страницы
+        // Первичная подгрузка данных юзера при обновлении страницы
         const me = data.find(u => u.id === MY_ID);
-        if (me && !currentStatus) {
+        if (me && totalStudySeconds === 0) {
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
-            currentStatus = me.status || '';
             totalStudySeconds = me.study_seconds || 0;
             document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
-            manageTimer();
         }
     }
 
-    // Запуск цикла обновлений списка (раз в 4 секунды)
     fetchGroup();
     setInterval(fetchGroup, 4000);
 </script>
