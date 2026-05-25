@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Монитор Группы - Horror Edition</title>
+    <title>Монитор Группы - Horror Edition (with Stats)</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -13,7 +13,7 @@
             --border-color: #2a0000;
             --red-pure: #ff0000;
             --red-blood: #b30000;
-            --red-glow: rgba(255, 0, 0, 0.6);
+            --red-glow: rgba(255, 0, 0, 0.05);
             --red-glow-strong: rgba(255, 0, 0, 0.9);
             --button-border: #440000;
             --online-glow: rgba(0, 255, 100, 0.8);
@@ -26,30 +26,37 @@
             font-family: 'Segoe UI', sans-serif;
             background-color: var(--bg-color);
             color: var(--text-main);
-            display: flex; justify-content: center; align-items: center;
+            display: flex; justify-content: center;
             min-height: 100vh;
             background-image: radial-gradient(circle at center, #1a0000 0%, #050505 100%);
         }
 
-        .container { width: 100%; max-width: 650px; }
+        .container {
+            width: 100%; max-width: 950px;
+            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+        }
+        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+
+        .column { display: flex; flex-direction: column; gap: 20px; }
 
         .card {
             background-color: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
-            padding: 24px; margin-bottom: 20px;
-            box-shadow: 0 4px 15px rgba(255, 0, 0, 0.05);
+            padding: 24px;
+            box-shadow: 0 4px 15px var(--red-glow);
             transition: all 0.3s ease;
         }
 
         .card:hover {
             border-color: var(--red-blood);
-            box-shadow: 0 6px 25px var(--red-glow);
+            box-shadow: 0 6px 25px rgba(255, 0, 0, 0.3);
         }
 
         h2 {
-            margin: 0 0 8px 0; color: var(--red-pure);
+            margin: 0 0 16px 0; color: var(--red-pure);
             text-shadow: 0 0 10px var(--red-glow-strong);
+            font-size: 20px;
         }
 
         #myInfo { margin-bottom: 12px; font-size: 14px; color: var(--text-muted); }
@@ -89,14 +96,13 @@
             transform: translateY(-2px);
         }
 
-        /* Разделитель блоков */
         .divider {
             height: 1px;
             background: radial-gradient(circle, var(--red-blood) 0%, transparent 100%);
             margin: 20px 0;
         }
 
-        /* Цвета для трех управляющих кнопок */
+        /* Кнопки сессии */
         .btn-danger {
             background-color: rgba(179, 0, 0, 0.15) !important;
             border-color: var(--red-blood) !important;
@@ -118,7 +124,7 @@
         }
         .btn-secondary:hover { background-color: #444 !important; color: #fff !important; }
 
-        /* Список пользователей */
+        /* Списки строк участников и рейтинга */
         .user-item {
             display: flex; align-items: center; gap: 15px;
             padding: 12px; border-radius: 8px; transition: 0.3s;
@@ -129,7 +135,6 @@
         .status-badge { display: flex; align-items: center; position: relative; }
         .status-dot { width: 14px; height: 14px; border-radius: 50%; transition: all 0.5s ease; }
 
-        /* Сетевой статус */
         .online-indicator {
             position: absolute; top: -4px; right: -4px; width: 8px; height: 8px; border-radius: 50%;
             background-color: #00ff64; box-shadow: 0 0 8px var(--online-glow);
@@ -139,16 +144,37 @@
             background-color: #444;
         }
         
+        .user-details { display: flex; width: 100%; justify-content: space-between; align-items: center; }
         .user-details strong { font-size: 16px; color: #fff; }
         .user-details small { color: #aaa; }
-        .study-time-tag { font-size: 12px; color: var(--red-pure); opacity: 0.9; font-family: monospace; margin-left: 5px; }
+        .study-time-tag { font-size: 13px; color: var(--red-pure); font-family: monospace; text-shadow: 0 0 5px var(--red-blood); }
+        .rank-number { font-size: 18px; font-weight: bold; color: #ffd700; min-width: 25px; text-shadow: 0 0 8px #ffd700; }
 
-        /* ХОРРОР СТИЛИ ДЛЯ ЧАТА СТАТУСОВ */
+        /* СИСТЕМА ДОСТИЖЕНИЙ В КРАСНОМ СТИЛЕ */
+        .achievements-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .achieve-card {
+            display: flex; align-items: center; gap: 12px;
+            background: #0a0a0a; padding: 12px; border-radius: 8px;
+            border: 1px solid #1a0000; opacity: 0.25; filter: grayscale(1);
+            transition: all 0.4s ease;
+        }
+        .achieve-card.unlocked {
+            opacity: 1; filter: grayscale(0); 
+            border-color: var(--red-blood);
+            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.1);
+            background: #120202;
+        }
+        .achieve-icon { font-size: 26px; }
+        .achieve-info { display: flex; flex-direction: column; }
+        .achieve-title { font-size: 13px; font-weight: bold; color: #fff; }
+        .achieve-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
+
+        /* ХОРРОР ЧАТ */
         .chat-box {
             background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            height: 200px;
+            height: 160px;
             overflow-y: auto;
             padding: 12px;
             margin-bottom: 12px;
@@ -157,7 +183,7 @@
             flex-direction: column;
             gap: 8px;
         }
-        .chat-message { line-height: 1.4; word-break: break-word; border-left: 2px solid #2a0000; padding-left: 6px; }
+        .chat-message { line-height: 1.4; word-break: break-word; border-left: 2px solid var(--red-blood); padding-left: 8px; }
         .chat-message .author { color: var(--red-pure); font-weight: bold; }
         .chat-message .text { color: var(--text-main); font-style: italic; }
         
@@ -183,9 +209,6 @@
             cursor: pointer;
             font-size: 18px;
             transition: 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
         }
         .chat-send-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
     </style>
@@ -193,50 +216,93 @@
 <body>
 
 <div class="container">
-    <div class="card">
-        <h2>Мой профиль</h2>
-        <div id="myInfo">Загрузка...</div>
-        
-        <div class="button-grid">
-            <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
-            <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
-            <button class="status-btn" onclick="changeStatus('👺 В игре', '#00ffff')">👺 В игре</button>
-            <button class="status-btn" onclick="changeStatus('⛓️ Дома', '#888888')">⛓️ Дома</button>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="timer-display">
-            <span>⏱️</span> <span id="localTimer">00 сек.</span>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 12px;">
-            <button class="status-btn btn-danger" onclick="toggleTimer(true)">
-                🛑 Завершить сессию (Старт Таймера)
-            </button>
+    <div class="column">
+        <div class="card">
+            <h2>Мой профиль</h2>
+            <div id="myInfo">Загрузка...</div>
             
-            <div class="button-grid" style="margin-bottom: 0;">
-                <button class="status-btn btn-warning" onclick="toggleTimer(false)">
-                    ☕ Перерыв (Пауза)
+            <div class="button-grid">
+                <button class="status-btn" onclick="changeStatus('🩸 Учусь', '#ff0000')">🩸 Учусь</button>
+                <button class="status-btn" onclick="changeStatus('☠️ Кофе', '#ffd700')">☠️ Кофе</button>
+                <button class="status-btn" onclick="changeStatus('👺 В игре', '#00ffff')">👺 В игре</button>
+                <button class="status-btn" onclick="changeStatus('⛓️ Дома', '#888888')">⛓️ Дома</button>
+            </div>
+
+            <div class="divider"></div>
+
+            <div class="timer-display">
+                <span>⏱️</span> <span id="localTimer">00 сек.</span>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 12px;">
+                <button class="status-btn btn-danger" onclick="toggleTimer(true)">
+                    🛑 Завершить сессию (Старт)
                 </button>
-                <button class="status-btn btn-secondary" onclick="goOffline()">
-                    Выход
-                </button>
+                
+                <div class="button-grid" style="margin-bottom: 0;">
+                    <button class="status-btn btn-warning" onclick="toggleTimer(false)">
+                        ☕ Перерыв (Пауза)
+                    </button>
+                    <button class="status-btn btn-secondary" onclick="goOffline()">
+                        Выход
+                    </button>
+                </div>
             </div>
         </div>
+
+        <div class="card">
+            <h2>🏆 Топ студентов</h2>
+            <div id="leaderboardList"></div>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>Монитор группы</h2>
-        <div id="groupList"></div>
-    </div>
+    <div class="column">
+        <div class="card">
+            <h2>Монитор группы</h2>
+            <div id="groupList"></div>
+        </div>
 
-    <div class="card">
-        <h2>💬 Последние крики (Чат)</h2>
-        <div class="chat-box" id="chatBox">Загрузка...</div>
-        <div class="chat-input-row">
-            <input type="text" class="chat-input" id="chatInput" placeholder="Высказать мысль..." onkeydown="if(event.key === 'Enter') sendMessage()">
-            <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+        <div class="card">
+            <h2>🩸 Достижения (<span id="achieveCount" style="color:var(--red-pure);">0</span>/4)</h2>
+            <div class="achievements-container">
+                <div class="achieve-card" id="ach_first_step">
+                    <div class="achieve-icon">🌱</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Первый шаг</span>
+                        <span class="achieve-desc">Проведи первую сессию учёбы</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_early_bird">
+                    <div class="achieve-icon">🦅</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Ранняя пташка</span>
+                        <span class="achieve-desc">Зайди на платформу до 8:00 утра</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_marathon">
+                    <div class="achieve-icon">🏃‍♂️</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Марафонец</span>
+                        <span class="achieve-desc">Учись более 2 часов суммарно</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_activist">
+                    <div class="achieve-icon">📢</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Активист</span>
+                        <span class="achieve-desc">Напиши 20 сообщений в чат</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card">
+            <h2>💬 Последние крики (Чат)</h2>
+            <div class="chat-box" id="chatBox">Загрузка...</div>
+            <div class="chat-input-row">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Высказать мысль..." onkeydown="if(event.key === 'Enter') sendMessage()">
+                <button class="chat-send-btn" onclick="sendMessage()">➤</button>
+            </div>
         </div>
     </div>
 </div>
@@ -253,15 +319,16 @@
     let isTimerActive = false;
     let totalStudySeconds = 0;
     let timerInterval = null;
+    let myMessageCount = 0;
 
     function formatTime(seconds) {
-        if (!seconds || seconds <= 0) return '0 сек.';
+        if (!seconds || seconds <= 0) return '0с';
         const h = Math.floor(seconds / 3600);
         const m = Math.floor((seconds % 3600) / 60);
         const s = seconds % 60;
-        if (h > 0) return `${h}ч ${m}м ${s}с`;
+        if (h > 0) return `${h}ч ${m}м`;
         if (m > 0) return `${m}м ${s}с`;
-        return `${s} сек.`;
+        return `${s}с`;
     }
 
     window.changeStatus = async (text, color) => {
@@ -298,20 +365,59 @@
         }
     }, 10000);
 
-    // ПОЛУЧЕНИЕ ДАННЫХ И ОБНОВЛЕНИЕ СПИСКА + ЧАТА
+    // Функция проверки достижений
+    function checkAchievements(user) {
+        let unlockedCount = 0;
+        
+        if (user.study_seconds > 0) {
+            document.getElementById('ach_first_step').classList.add('unlocked');
+            unlockedCount++;
+        }
+        if (user.last_seen) {
+            const hour = new Date(user.last_seen).getHours();
+            if (hour < 8) {
+                document.getElementById('ach_early_bird').classList.add('unlocked');
+                unlockedCount++;
+            }
+        }
+        if (user.study_seconds >= 7200) {
+            document.getElementById('ach_marathon').classList.add('unlocked');
+            unlockedCount++;
+        }
+        if (user.msg_count >= 20) {
+            document.getElementById('ach_activist').classList.add('unlocked');
+            unlockedCount++;
+        }
+
+        document.getElementById('achieveCount').innerText = unlockedCount;
+    }
+
     async function fetchGroupAndChat() {
-        const { data, error } = await supabase.from('profiles').select('*').order('username', { ascending: true });
+        const { data, error } = await supabase.from('profiles').select('*');
         if (error) return console.error(error);
 
         const list = document.getElementById('groupList');
+        const leaderboard = document.getElementById('leaderboardList');
         const chatBox = document.getElementById('chatBox');
         const now = new Date();
 
-        // 1. Рендерим монитор группы
-        list.innerHTML = data.map(user => {
+        // 1. Рендерим ТОП СТУДЕНТОВ
+        const sortedLeaderboard = [...data].sort((a, b) => (b.study_seconds || 0) - (a.study_seconds || 0));
+        leaderboard.innerHTML = sortedLeaderboard.slice(0, 5).map((user, idx) => `
+            <div class="user-item">
+                <span class="rank-number">#${idx + 1}</span>
+                <div class="user-details">
+                    <strong>${user.username || 'Без имени'}</strong>
+                    <span class="study-time-tag">⏱️ ${formatTime(user.study_seconds)}</span>
+                </div>
+            </div>
+        `).join('');
+
+        // 2. Рендерим МОНИТОР ГРУППЫ
+        const sortedUsers = [...data].sort((a, b) => (a.username || '').localeCompare(b.username || ''));
+        list.innerHTML = sortedUsers.map(user => {
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
-            const diffSeconds = Math.floor((now - lastSeenDate) / 1000);
-            const isOnline = diffSeconds < 15;
+            const isOnline = Math.floor((now - lastSeenDate) / 1000) < 15;
 
             return `
                 <div class="user-item">
@@ -319,17 +425,15 @@
                         <div class="status-dot" style="background: ${user.color || '#ccc'}; box-shadow: 0 0 10px ${user.color || '#ccc'}"></div>
                         <div class="${isOnline ? 'online-indicator' : 'offline-indicator'}"></div>
                     </div>
-                    <div class="user-details" style="flex-grow: 1;">
-                        <strong>${user.username}</strong> 
-                        <span class="study-time-tag">⏱️ ${formatTime(user.study_seconds)}</span>
-                        <br>
+                    <div class="user-details">
+                        <strong>${user.username || 'Аноним'}</strong>
                         <small>${user.status || 'В небытии'}</small>
                     </div>
                 </div>
             `;
         }).join('');
 
-        // 2. Рендерим "Чат" (только пользователи, у которых есть сообщения)
+        // 3. Рендерим ЧАТ
         const messagesHtml = data
             .filter(user => user.last_message) 
             .map(user => `
@@ -338,37 +442,38 @@
                     <span class="text">${user.last_message}</span>
                 </div>
             `).join('');
+        chatBox.innerHTML = messagesHtml || '<div style="color: #444; font-style: italic;">Тишина...</div>';
 
-        chatBox.innerHTML = messagesHtml || '<div style="color: #444; font-style: italic;">Тишина... Никто еще не кричал.</div>';
-
-        // Инициализация при входе
+        // 4. Синхронизация текущего профиля
         const me = data.find(u => u.id === MY_ID);
-        if (me && totalStudySeconds === 0) {
+        if (me) {
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
-            totalStudySeconds = me.study_seconds || 0;
-            document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+            myMessageCount = me.msg_count || 0;
+            if (totalStudySeconds === 0) {
+                totalStudySeconds = me.study_seconds || 0;
+                document.getElementById('localTimer').innerText = formatTime(totalStudySeconds);
+            }
+            checkAchievements(me);
         }
     }
 
-    // ОТПРАВКА СООБЩЕНИЯ (Обновление своей строки)
     window.sendMessage = async () => {
         const input = document.getElementById('chatInput');
         const text = input.value.trim();
         if (!text) return;
 
         input.value = '';
+        const newMsgCount = myMessageCount + 1;
 
-        // Записываем сообщение прямо в профиль текущего юзера
         const { error } = await supabase
             .from('profiles')
-            .update({ last_message: text, last_seen: new Date().toISOString() })
+            .update({ last_message: text, msg_count: newMsgCount, last_seen: new Date().toISOString() })
             .eq('id', MY_ID);
 
         if (error) console.error(error);
         else fetchGroupAndChat();
     };
 
-    // Запуск единого цикла обновлений раз в 4 секунды
     fetchGroupAndChat();
     setInterval(fetchGroupAndChat, 4000);
 </script>
