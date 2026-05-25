@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Монитор Группы - Horror Edition (with Stats)</title>
+    <title>Монитор Группы - Horror Edition (8 Achievements)</title>
     <style>
         :root {
             --bg-color: #050505;
@@ -32,10 +32,10 @@
         }
 
         .container {
-            width: 100%; max-width: 950px;
-            display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+            width: 100%; max-width: 1000px;
+            display: grid; grid-template-columns: 1fr 1.2fr; gap: 20px;
         }
-        @media (max-width: 768px) { .container { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .container { grid-template-columns: 1fr; } }
 
         .column { display: flex; flex-direction: column; gap: 20px; }
 
@@ -61,7 +61,6 @@
 
         #myInfo { margin-bottom: 12px; font-size: 14px; color: var(--text-muted); }
         
-        /* Стилизация таймера */
         .timer-display {
             font-size: 28px;
             font-weight: bold;
@@ -102,7 +101,6 @@
             margin: 20px 0;
         }
 
-        /* Кнопки сессии */
         .btn-danger {
             background-color: rgba(179, 0, 0, 0.15) !important;
             border-color: var(--red-blood) !important;
@@ -124,7 +122,6 @@
         }
         .btn-secondary:hover { background-color: #444 !important; color: #fff !important; }
 
-        /* Списки строк участников и рейтинга */
         .user-item {
             display: flex; align-items: center; gap: 15px;
             padding: 12px; border-radius: 8px; transition: 0.3s;
@@ -150,8 +147,10 @@
         .study-time-tag { font-size: 13px; color: var(--red-pure); font-family: monospace; text-shadow: 0 0 5px var(--red-blood); }
         .rank-number { font-size: 18px; font-weight: bold; color: #ffd700; min-width: 25px; text-shadow: 0 0 8px #ffd700; }
 
-        /* СИСТЕМА ДОСТИЖЕНИЙ В КРАСНОМ СТИЛЕ */
+        /* СЕТКА ДОСТИЖЕНИЙ (8 ШТУК) */
         .achievements-container { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        @media (max-width: 600px) { .achievements-container { grid-template-columns: 1fr; } }
+        
         .achieve-card {
             display: flex; align-items: center; gap: 12px;
             background: #0a0a0a; padding: 12px; border-radius: 8px;
@@ -161,7 +160,7 @@
         .achieve-card.unlocked {
             opacity: 1; filter: grayscale(0); 
             border-color: var(--red-blood);
-            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.1);
+            box-shadow: inset 0 0 10px rgba(255, 0, 0, 0.15);
             background: #120202;
         }
         .achieve-icon { font-size: 26px; }
@@ -169,12 +168,11 @@
         .achieve-title { font-size: 13px; font-weight: bold; color: #fff; }
         .achieve-desc { font-size: 11px; color: var(--text-muted); margin-top: 2px; }
 
-        /* ХОРРОР ЧАТ */
         .chat-box {
             background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 8px;
-            height: 160px;
+            height: 140px;
             overflow-y: auto;
             padding: 12px;
             margin-bottom: 12px;
@@ -189,27 +187,12 @@
         
         .chat-input-row { display: flex; gap: 10px; }
         .chat-input {
-            flex-grow: 1;
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            color: var(--text-main);
-            padding: 12px;
-            outline: none;
-            transition: 0.3s;
+            flex-grow: 1; background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; color: var(--text-main); padding: 12px; outline: none;
         }
         .chat-input:focus { border-color: var(--red-blood); box-shadow: 0 0 10px rgba(179,0,0,0.3); }
         
-        .chat-send-btn {
-            background: var(--green-btn);
-            border: none;
-            border-radius: 8px;
-            color: white;
-            padding: 0 16px;
-            cursor: pointer;
-            font-size: 18px;
-            transition: 0.3s;
-        }
+        .chat-send-btn { background: var(--green-btn); border: none; border-radius: 8px; color: white; padding: 0 16px; cursor: pointer; font-size: 18px; }
         .chat-send-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
     </style>
 </head>
@@ -235,17 +218,10 @@
             </div>
 
             <div style="display: flex; flex-direction: column; gap: 12px;">
-                <button class="status-btn btn-danger" onclick="toggleTimer(true)">
-                    🛑 Завершить сессию (Старт)
-                </button>
-                
+                <button class="status-btn btn-danger" onclick="toggleTimer(true)">🛑 Завершить сессию (Старт)</button>
                 <div class="button-grid" style="margin-bottom: 0;">
-                    <button class="status-btn btn-warning" onclick="toggleTimer(false)">
-                        ☕ Перерыв (Пауза)
-                    </button>
-                    <button class="status-btn btn-secondary" onclick="goOffline()">
-                        Выход
-                    </button>
+                    <button class="status-btn btn-warning" onclick="toggleTimer(false)">☕ Перерыв (Пауза)</button>
+                    <button class="status-btn btn-secondary" onclick="goOffline()">Выход</button>
                 </div>
             </div>
         </div>
@@ -263,34 +239,63 @@
         </div>
 
         <div class="card">
-            <h2>🩸 Достижения (<span id="achieveCount" style="color:var(--red-pure);">0</span>/4)</h2>
+            <h2>🩸 Клеймо достижений (<span id="achieveCount" style="color:var(--red-pure);">0</span>/8)</h2>
             <div class="achievements-container">
                 <div class="achieve-card" id="ach_first_step">
                     <div class="achieve-icon">🌱</div>
                     <div class="achieve-info">
                         <span class="achieve-title">Первый шаг</span>
-                        <span class="achieve-desc">Проведи первую сессию учёбы</span>
+                        <span class="achieve-desc">Провести хотя бы 1с учёбы</span>
                     </div>
                 </div>
                 <div class="achieve-card" id="ach_early_bird">
                     <div class="achieve-icon">🦅</div>
                     <div class="achieve-info">
                         <span class="achieve-title">Ранняя пташка</span>
-                        <span class="achieve-desc">Зайди на платформу до 8:00 утра</span>
+                        <span class="achieve-desc">Зайти в систему до 8:00 утра</span>
                     </div>
                 </div>
                 <div class="achieve-card" id="ach_marathon">
                     <div class="achieve-icon">🏃‍♂️</div>
                     <div class="achieve-info">
                         <span class="achieve-title">Марафонец</span>
-                        <span class="achieve-desc">Учись более 2 часов суммарно</span>
+                        <span class="achieve-desc">Суммарно учиться более 2 часов</span>
                     </div>
                 </div>
                 <div class="achieve-card" id="ach_activist">
                     <div class="achieve-icon">📢</div>
                     <div class="achieve-info">
                         <span class="achieve-title">Активист</span>
-                        <span class="achieve-desc">Напиши 20 сообщений в чат</span>
+                        <span class="achieve-desc">Оставить более 20 криков в чате</span>
+                    </div>
+                </div>
+
+                <div class="achieve-card" id="ach_vampire">
+                    <div class="achieve-icon">🦇</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Ночной вампир</span>
+                        <span class="achieve-desc">Учиться ночью в промежутке от 00:00 до 04:00</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_madman">
+                    <div class="achieve-icon">🧠</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Безумец</span>
+                        <span class="achieve-desc">Набрать более 5 часов общего времени учебы</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_gamer">
+                    <div class="achieve-icon">🎮</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Геймер в завязке</span>
+                        <span class="achieve-desc">Сменить статус на опасный «👺 В игре»</span>
+                    </div>
+                </div>
+                <div class="achieve-card" id="ach_silent_hill">
+                    <div class="achieve-icon">🌫️</div>
+                    <div class="achieve-info">
+                        <span class="achieve-title">Сайлент Хилл</span>
+                        <span class="achieve-desc">Учиться без единого слова в чате (0 сообщений)</span>
                     </div>
                 </div>
             </div>
@@ -365,14 +370,16 @@
         }
     }, 10000);
 
-    // Функция проверки достижений
+    // УМНАЯ КАЛЬКУЛЯЦИЯ ДОСТИЖЕНИЙ (8 НАГРАД)
     function checkAchievements(user) {
         let unlockedCount = 0;
         
+        // 1. Первый шаг
         if (user.study_seconds > 0) {
             document.getElementById('ach_first_step').classList.add('unlocked');
             unlockedCount++;
         }
+        // 2. Ранняя пташка (зашел до 8:00 утра)
         if (user.last_seen) {
             const hour = new Date(user.last_seen).getHours();
             if (hour < 8) {
@@ -380,12 +387,37 @@
                 unlockedCount++;
             }
         }
+        // 3. Марафонец (более 2 часов = 7200 секунд)
         if (user.study_seconds >= 7200) {
             document.getElementById('ach_marathon').classList.add('unlocked');
             unlockedCount++;
         }
+        // 4. Активист (написал 20 сообщений)
         if (user.msg_count >= 20) {
             document.getElementById('ach_activist').classList.add('unlocked');
+            unlockedCount++;
+        }
+        // 5. Ночной вампир (активность с 00:00 до 04:00 ночи)
+        if (user.last_seen) {
+            const hour = new Date(user.last_seen).getHours();
+            if (hour >= 0 && hour < 4) {
+                document.getElementById('ach_vampire').classList.add('unlocked');
+                unlockedCount++;
+            }
+        }
+        // 6. Безумец (Проучился суммарно больше 5 часов = 18000 секунд)
+        if (user.study_seconds >= 18000) {
+            document.getElementById('ach_madman').classList.add('unlocked');
+            unlockedCount++;
+        }
+        // 7. Геймер в завязке (кликнул хотя бы раз статус "👺 В игре")
+        if (user.status === '👺 В игре') {
+            document.getElementById('ach_gamer').classList.add('unlocked');
+            unlockedCount++;
+        }
+        // 8. Сайлент Хилл (учится, время капает, но сообщений в чате ровно 0)
+        if (user.study_seconds > 60 && (!user.msg_count || user.msg_count === 0)) {
+            document.getElementById('ach_silent_hill').classList.add('unlocked');
             unlockedCount++;
         }
 
@@ -401,7 +433,7 @@
         const chatBox = document.getElementById('chatBox');
         const now = new Date();
 
-        // 1. Рендерим ТОП СТУДЕНТОВ
+        // ТОП СТУДЕНТОВ
         const sortedLeaderboard = [...data].sort((a, b) => (b.study_seconds || 0) - (a.study_seconds || 0));
         leaderboard.innerHTML = sortedLeaderboard.slice(0, 5).map((user, idx) => `
             <div class="user-item">
@@ -413,7 +445,7 @@
             </div>
         `).join('');
 
-        // 2. Рендерим МОНИТОР ГРУППЫ
+        // МОНИТОР ГРУППЫ
         const sortedUsers = [...data].sort((a, b) => (a.username || '').localeCompare(b.username || ''));
         list.innerHTML = sortedUsers.map(user => {
             const lastSeenDate = user.last_seen ? new Date(user.last_seen) : new Date(0);
@@ -433,7 +465,7 @@
             `;
         }).join('');
 
-        // 3. Рендерим ЧАТ
+        // ЧАТ
         const messagesHtml = data
             .filter(user => user.last_message) 
             .map(user => `
@@ -444,7 +476,7 @@
             `).join('');
         chatBox.innerHTML = messagesHtml || '<div style="color: #444; font-style: italic;">Тишина...</div>';
 
-        // 4. Синхронизация текущего профиля
+        // Профиль текущего студента
         const me = data.find(u => u.id === MY_ID);
         if (me) {
             document.getElementById('myInfo').innerText = `Жертва: ${me.username}`;
